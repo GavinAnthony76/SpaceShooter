@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter 3D</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            background: #000;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00ffff;
+            font-size: 24px;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #ui div {
+            margin: 10px 0;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 50px;
+            border: 3px solid #ff0000;
+            box-shadow: 0 0 30px #ff0000;
+            display: none;
+            z-index: 100;
+        }
+
+        #gameOver h1 {
+            font-size: 64px;
+            color: #ff0000;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #ff0000;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        #gameOver p {
+            font-size: 28px;
+            color: #00ffff;
+            margin: 15px 0;
+        }
+
+        #gameOver button {
+            margin-top: 30px;
+            padding: 20px 40px;
+            font-size: 24px;
+            background: #00ffff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        #gameOver button:hover {
+            background: #00cccc;
+            box-shadow: 0 0 40px #00ffff;
+            transform: scale(1.05);
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #00ffff;
+            font-size: 18px;
+            text-shadow: 0 0 10px #00ffff;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #instructions p {
+            margin: 5px 0;
+        }
+
+        #title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 48px;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="title">🚀 SPACE SHOOTER 3D 🚀</div>
+
+    <canvas id="renderCanvas"></canvas>
+
+    <div id="ui">
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LIVES: <span id="lives">3</span></div>
+        <div>ENEMIES: <span id="enemies">0</span></div>
+    </div>
+
+    <div id="gameOver">
+        <h1>GAME OVER</h1>
+        <p>FINAL SCORE: <span id="finalScore">0</span></p>
+        <p>ENEMIES DESTROYED: <span id="finalEnemies">0</span></p>
+        <button onclick="restartGame()">PLAY AGAIN</button>
+    </div>
+
+    <div id="instructions">
+        <p>⬅️ ➡️ A/D or Arrow Keys: Move Left/Right | W/S or ↑↓: Move Forward/Back</p>
+        <p>SPACE: Shoot | Destroy all enemies!</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('renderCanvas');
+        const engine = new BABYLON.Engine(canvas, true);
+
+        // Game state
+        let gameRunning = true;
+        let score = 0;
+        let lives = 3;
+        let enemiesDestroyed = 0;
+        let enemySpawnRate = 2000;
+        let lastEnemySpawn = 0;
+
+        // Game objects
+        let player;
+        let scene;
+        let camera;
+        const bullets = [];
+        const enemies = [];
+        const particles = [];
+
+        // Input state
+        const keys = {
+            left: false,
+            right: false,
+            forward: false,
+            backward: false,
+            space: false
+        };
+
+        // Create scene
+        function createScene() {
+            scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color3(0, 0, 0.05);
+
+            // Camera
+            camera = new BABYLON.ArcRotateCamera(
+                'camera',
+                0,
+                Math.PI / 3,
+                50,
+                new BABYLON.Vector3(0, 0, 0),
+                scene
+            );
+            camera.lowerRadiusLimit = 40;
+            camera.upperRadiusLimit = 60;
+            camera.lowerBetaLimit = Math.PI / 4;
+            camera.upperBetaLimit = Math.PI / 2.5;
+
+            // Lighting
+            const light1 = new BABYLON.HemisphericLight(
+                'light1',
+                new BABYLON.Vector3(0, 1, 0),
+                scene
+            );
+            light1.intensity = 0.5;
+
+            const light2 = new BABYLON.PointLight(
+                'light2',
+                new BABYLON.Vector3(0, 10, 0),
+                scene
+            );
+            light2.intensity = 0.8;
+            light2.diffuse = new BABYLON.Color3(0, 0.8, 1);
+
+            // Create starfield
+            createStarfield();
+
+            // Create player
+            createPlayer();
+
+            // Create ground grid for reference
+            createGrid();
+
+            return scene;
+        }
+
+        // Create starfield background
+        function createStarfield() {
+            const starfield = BABYLON.MeshBuilder.CreateSphere(
+                'starfield',
+                { diameter: 500 },
+                scene
+            );
+
+            const starMaterial = new BABYLON.StandardMaterial('starMat', scene);
+            starMaterial.emissiveColor = new BABYLON.Color3(1, 1, 1);
+            starMaterial.backFaceCulling = false;
+
+            const starTexture = new BABYLON.Texture(
+                'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="512" height="512" fill="black"/>
+                        ${Array.from({length: 200}, () => {
+                            const x = Math.random() * 512;
+                            const y = Math.random() * 512;
+                            const size = Math.random() * 2;
+                            const brightness = 0.5 + Math.random() * 0.5;
+                            return `<circle cx="${x}" cy="${y}" r="${size}" fill="rgba(255,255,255,${brightness})"/>`;
+                        }).join('')}
+                    </svg>
+                `),
+                scene
+            );
+
+            starMaterial.emissiveTexture = starTexture;
+            starfield.material = starMaterial;
+        }
+
+        // Create grid
+        function createGrid() {
+            const gridMaterial = new BABYLON.StandardMaterial('gridMat', scene);
+            gridMaterial.emissiveColor = new BABYLON.Color3(0, 0.3, 0.5);
+            gridMaterial.wireframe = true;
+            gridMaterial.alpha = 0.3;
+
+            const ground = BABYLON.MeshBuilder.CreateGround(
+                'ground',
+                { width: 100, height: 100 },
+                scene
+            );
+            ground.position.y = -5;
+            ground.material = gridMaterial;
+        }
+
+        // Create player ship
+        function createPlayer() {
+            // Main body
+            const body = BABYLON.MeshBuilder.CreateBox(
+                'playerBody',
+                { width: 2, height: 0.5, depth: 3 },
+                scene
+            );
+
+            // Wings
+            const leftWing = BABYLON.MeshBuilder.CreateBox(
+                'leftWing',
+                { width: 2, height: 0.2, depth: 1.5 },
+                scene
+            );
+            leftWing.position.x = -2;
+            leftWing.position.z = -0.5;
+
+            const rightWing = BABYLON.MeshBuilder.CreateBox(
+                'rightWing',
+                { width: 2, height: 0.2, depth: 1.5 },
+                scene
+            );
+            rightWing.position.x = 2;
+            rightWing.position.z = -0.5;
+
+            // Cockpit
+            const cockpit = BABYLON.MeshBuilder.CreateSphere(
+                'cockpit',
+                { diameter: 1 },
+                scene
+            );
+            cockpit.position.y = 0.5;
+            cockpit.position.z = 0.5;
+            cockpit.scaling = new BABYLON.Vector3(0.8, 0.6, 1.2);
+
+            // Merge into one mesh
+            player = BABYLON.Mesh.MergeMeshes(
+                [body, leftWing, rightWing, cockpit],
+                true,
+                true
+            );
+
+            // Material
+            const playerMaterial = new BABYLON.StandardMaterial('playerMat', scene);
+            playerMaterial.diffuseColor = new BABYLON.Color3(0, 0.8, 1);
+            playerMaterial.emissiveColor = new BABYLON.Color3(0, 0.4, 0.6);
+            playerMaterial.specularColor = new BABYLON.Color3(1, 1, 1);
+            player.material = playerMaterial;
+
+            player.position = new BABYLON.Vector3(0, 0, 0);
+            player.rotation.y = Math.PI;
+
+            // Add glow layer
+            const gl = new BABYLON.GlowLayer('glow', scene);
+            gl.intensity = 0.5;
+        }
+
+        // Create enemy
+        function createEnemy() {
+            const type = Math.floor(Math.random() * 3);
+            let enemy;
+
+            if (type === 0) {
+                // Pyramid enemy
+                enemy = BABYLON.MeshBuilder.CreateCylinder(
+                    'enemy',
+                    { diameterTop: 0, diameterBottom: 2, height: 2 },
+                    scene
+                );
+            } else if (type === 1) {
+                // Box enemy
+                enemy = BABYLON.MeshBuilder.CreateBox(
+                    'enemy',
+                    { size: 2 },
+                    scene
+                );
+            } else {
+                // Sphere enemy
+                enemy = BABYLON.MeshBuilder.CreateSphere(
+                    'enemy',
+                    { diameter: 2 },
+                    scene
+                );
+            }
+
+            const enemyMaterial = new BABYLON.StandardMaterial('enemyMat', scene);
+            const colorChoice = Math.random();
+            if (colorChoice < 0.33) {
+                enemyMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
+                enemyMaterial.emissiveColor = new BABYLON.Color3(0.5, 0, 0);
+            } else if (colorChoice < 0.66) {
+                enemyMaterial.diffuseColor = new BABYLON.Color3(1, 0.4, 0);
+                enemyMaterial.emissiveColor = new BABYLON.Color3(0.5, 0.2, 0);
+            } else {
+                enemyMaterial.diffuseColor = new BABYLON.Color3(1, 0, 1);
+                enemyMaterial.emissiveColor = new BABYLON.Color3(0.5, 0, 0.5);
+            }
+            enemy.material = enemyMaterial;
+
+            enemy.position.x = (Math.random() - 0.5) * 40;
+            enemy.position.y = Math.random() * 5;
+            enemy.position.z = -50;
+
+            enemy.velocity = {
+                x: (Math.random() - 0.5) * 0.1,
+                z: 0.15 + Math.random() * 0.15
+            };
+
+            enemy.rotationSpeed = {
+                x: (Math.random() - 0.5) * 0.05,
+                y: (Math.random() - 0.5) * 0.05
+            };
+
+            enemies.push(enemy);
+        }
+
+        // Create bullet
+        function shoot() {
+            if (!gameRunning) return;
+
+            const bullet = BABYLON.MeshBuilder.CreateCylinder(
+                'bullet',
+                { diameter: 0.3, height: 2 },
+                scene
+            );
+
+            const bulletMaterial = new BABYLON.StandardMaterial('bulletMat', scene);
+            bulletMaterial.diffuseColor = new BABYLON.Color3(1, 1, 0);
+            bulletMaterial.emissiveColor = new BABYLON.Color3(1, 1, 0);
+            bullet.material = bulletMaterial;
+
+            bullet.position = player.position.clone();
+            bullet.position.y += 1;
+            bullet.position.z -= 2;
+            bullet.rotation.x = Math.PI / 2;
+
+            bullet.velocity = -0.8;
+
+            bullets.push(bullet);
+        }
+
+        // Create explosion effect
+        function createExplosion(position) {
+            const particleSystem = new BABYLON.ParticleSystem('explosion', 200, scene);
+
+            particleSystem.particleTexture = new BABYLON.Texture(
+                'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="32" r="30" fill="white"/>
+                    </svg>
+                `),
+                scene
+            );
+
+            particleSystem.emitter = position;
+            particleSystem.minEmitBox = new BABYLON.Vector3(-0.5, -0.5, -0.5);
+            particleSystem.maxEmitBox = new BABYLON.Vector3(0.5, 0.5, 0.5);
+
+            particleSystem.color1 = new BABYLON.Color4(1, 1, 0, 1);
+            particleSystem.color2 = new BABYLON.Color4(1, 0.5, 0, 1);
+            particleSystem.colorDead = new BABYLON.Color4(1, 0, 0, 0);
+
+            particleSystem.minSize = 0.3;
+            particleSystem.maxSize = 1;
+
+            particleSystem.minLifeTime = 0.3;
+            particleSystem.maxLifeTime = 0.8;
+
+            particleSystem.emitRate = 500;
+            particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+
+            particleSystem.gravity = new BABYLON.Vector3(0, 0, 0);
+            particleSystem.direction1 = new BABYLON.Vector3(-2, -2, -2);
+            particleSystem.direction2 = new BABYLON.Vector3(2, 2, 2);
+
+            particleSystem.minEmitPower = 1;
+            particleSystem.maxEmitPower = 3;
+            particleSystem.updateSpeed = 0.01;
+
+            particleSystem.start();
+
+            setTimeout(() => {
+                particleSystem.stop();
+                setTimeout(() => particleSystem.dispose(), 1000);
+            }, 100);
+        }
+
+        // Update game
+        function updateGame() {
+            if (!gameRunning) return;
+
+            const deltaTime = engine.getDeltaTime() / 1000;
+            const currentTime = Date.now();
+
+            // Update player position
+            const moveSpeed = 20 * deltaTime;
+            if (keys.left && player.position.x > -20) {
+                player.position.x -= moveSpeed;
+            }
+            if (keys.right && player.position.x < 20) {
+                player.position.x += moveSpeed;
+            }
+            if (keys.forward && player.position.z > -20) {
+                player.position.z -= moveSpeed;
+            }
+            if (keys.backward && player.position.z < 20) {
+                player.position.z += moveSpeed;
+            }
+
+            // Update camera to follow player
+            camera.target = player.position;
+
+            // Update bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].position.z += bullets[i].velocity;
+
+                if (bullets[i].position.z < -60) {
+                    bullets[i].dispose();
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // Update enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                enemies[i].position.z += enemies[i].velocity.z;
+                enemies[i].position.x += enemies[i].velocity.x;
+                enemies[i].rotation.x += enemies[i].rotationSpeed.x;
+                enemies[i].rotation.y += enemies[i].rotationSpeed.y;
+
+                // Check collision with player
+                if (player.intersectsMesh(enemies[i], false)) {
+                    createExplosion(enemies[i].position);
+                    enemies[i].dispose();
+                    enemies.splice(i, 1);
+                    lives--;
+                    updateUI();
+                    if (lives <= 0) {
+                        endGame();
+                    }
+                    continue;
+                }
+
+                // Remove if off screen
+                if (enemies[i].position.z > 30) {
+                    enemies[i].dispose();
+                    enemies.splice(i, 1);
+                }
+            }
+
+            // Check bullet-enemy collisions
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    if (bullets[i] && enemies[j] && bullets[i].intersectsMesh(enemies[j], false)) {
+                        createExplosion(enemies[j].position);
+                        bullets[i].dispose();
+                        bullets.splice(i, 1);
+                        enemies[j].dispose();
+                        enemies.splice(j, 1);
+                        score += 100;
+                        enemiesDestroyed++;
+                        updateUI();
+                        break;
+                    }
+                }
+            }
+
+            // Spawn enemies
+            if (currentTime - lastEnemySpawn > enemySpawnRate) {
+                createEnemy();
+                lastEnemySpawn = currentTime;
+
+                // Gradually increase difficulty
+                if (enemySpawnRate > 500) {
+                    enemySpawnRate -= 5;
+                }
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('enemies').textContent = enemiesDestroyed;
+        }
+
+        // End game
+        function endGame() {
+            gameRunning = false;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalEnemies').textContent = enemiesDestroyed;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        // Restart game
+        function restartGame() {
+            // Clean up
+            bullets.forEach(b => b.dispose());
+            enemies.forEach(e => e.dispose());
+            bullets.length = 0;
+            enemies.length = 0;
+
+            // Reset state
+            gameRunning = true;
+            score = 0;
+            lives = 3;
+            enemiesDestroyed = 0;
+            enemySpawnRate = 2000;
+            lastEnemySpawn = 0;
+
+            player.position = new BABYLON.Vector3(0, 0, 0);
+
+            document.getElementById('gameOver').style.display = 'none';
+            updateUI();
+        }
+
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = true;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = true;
+            }
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                keys.forward = true;
+            }
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                keys.backward = true;
+            }
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (!keys.space) {
+                    shoot();
+                }
+                keys.space = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = false;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = false;
+            }
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                keys.forward = false;
+            }
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                keys.backward = false;
+            }
+            if (e.key === ' ') {
+                keys.space = false;
+            }
+        });
+
+        // Initialize
+        scene = createScene();
+        updateUI();
+
+        // Render loop
+        engine.runRenderLoop(() => {
+            updateGame();
+            scene.render();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
