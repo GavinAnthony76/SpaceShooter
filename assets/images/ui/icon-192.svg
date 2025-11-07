@@ -1,0 +1,20 @@
+<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00CED1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="192" height="192" fill="url(#bgGrad)" rx="20"/>
+
+  <!-- RPS Symbols -->
+  <text x="48" y="80" font-size="48" fill="#FFD700" font-family="Arial" font-weight="bold">✊</text>
+  <text x="96" y="80" font-size="48" fill="#00ff00" font-family="Arial" font-weight="bold">✋</text>
+  <text x="144" y="80" font-size="48" fill="#ff6666" font-family="Arial" font-weight="bold">✌</text>
+
+  <!-- Title -->
+  <text x="96" y="140" font-size="32" fill="#FFFFFF" font-family="Arial" font-weight="bold" text-anchor="middle">RPS</text>
+  <text x="96" y="170" font-size="20" fill="#FFFFFF" font-family="Arial" font-weight="bold" text-anchor="middle">FIGHTERS</text>
+</svg>

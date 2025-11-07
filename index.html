@@ -2,860 +2,332 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Shooter 3D</title>
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="RPS Fighters - A rock-paper-scissors card fighting game">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-        body {
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Courier New', monospace;
-            background: #000;
-        }
+    <title>RPS Fighters</title>
 
-        #renderCanvas {
-            width: 100%;
-            height: 100%;
-            touch-action: none;
-        }
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
 
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #00ffff;
-            font-size: 24px;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-            pointer-events: none;
-            z-index: 10;
-        }
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/ui/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/images/ui/icon-192.png">
 
-        #ui div {
-            margin: 10px 0;
-        }
-
-        #gameOver {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background: rgba(0, 0, 0, 0.95);
-            padding: 50px;
-            border: 3px solid #ff0000;
-            box-shadow: 0 0 30px #ff0000;
-            display: none;
-            z-index: 100;
-        }
-
-        #gameOver h1 {
-            font-size: 64px;
-            color: #ff0000;
-            margin-bottom: 30px;
-            text-shadow: 0 0 20px #ff0000;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        #gameOver p {
-            font-size: 28px;
-            color: #00ffff;
-            margin: 15px 0;
-        }
-
-        #gameOver button {
-            margin-top: 30px;
-            padding: 20px 40px;
-            font-size: 24px;
-            background: #00ffff;
-            color: #000;
-            border: none;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            transition: all 0.3s;
-            box-shadow: 0 0 20px #00ffff;
-        }
-
-        #gameOver button:hover {
-            background: #00cccc;
-            box-shadow: 0 0 40px #00ffff;
-            transform: scale(1.05);
-        }
-
-        #instructions {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            color: #00ffff;
-            font-size: 18px;
-            text-shadow: 0 0 10px #00ffff;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        #instructions p {
-            margin: 5px 0;
-        }
-
-        #title {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 48px;
-            color: #00ffff;
-            text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        /* Mobile Controls */
-        #mobileControls {
-            display: none;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 250px;
-            z-index: 50;
-            pointer-events: none;
-        }
-
-        #joystick {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 150px;
-            height: 150px;
-            pointer-events: all;
-        }
-
-        #joystickBase {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: rgba(0, 255, 255, 0.2);
-            border: 3px solid rgba(0, 255, 255, 0.5);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-            position: absolute;
-        }
-
-        #joystickStick {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: rgba(0, 255, 255, 0.6);
-            border: 3px solid #00ffff;
-            box-shadow: 0 0 30px #00ffff;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: all 0.1s;
-        }
-
-        #shootButton {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: rgba(255, 255, 0, 0.3);
-            border: 4px solid rgba(255, 255, 0, 0.7);
-            box-shadow: 0 0 30px rgba(255, 255, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            color: #ffff00;
-            font-weight: bold;
-            pointer-events: all;
-            user-select: none;
-            transition: all 0.1s;
-        }
-
-        #shootButton:active {
-            background: rgba(255, 255, 0, 0.6);
-            transform: scale(0.95);
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            #title {
-                font-size: 24px;
-                top: 10px;
-            }
-
-            #ui {
-                font-size: 16px;
-                top: 50px;
-                left: 10px;
-            }
-
-            #instructions {
-                display: none;
-            }
-
-            #mobileControls {
-                display: block;
-            }
-
-            #gameOver h1 {
-                font-size: 36px;
-            }
-
-            #gameOver p {
-                font-size: 18px;
-            }
-
-            #gameOver {
-                padding: 30px;
-            }
-        }
-
-        @media (min-width: 769px) {
-            #instructions {
-                display: block;
-            }
-        }
-    </style>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
 </head>
 <body>
-    <div id="title">🚀 SPACE SHOOTER 3D 🚀</div>
-
-    <canvas id="renderCanvas"></canvas>
-
-    <div id="ui">
-        <div>SCORE: <span id="score">0</span></div>
-        <div>LIVES: <span id="lives">3</span></div>
-        <div>ENEMIES: <span id="enemies">0</span></div>
-    </div>
-
-    <div id="gameOver">
-        <h1>GAME OVER</h1>
-        <p>FINAL SCORE: <span id="finalScore">0</span></p>
-        <p>ENEMIES DESTROYED: <span id="finalEnemies">0</span></p>
-        <button onclick="restartGame()">PLAY AGAIN</button>
-    </div>
-
-    <div id="instructions">
-        <p>⬅️ ➡️ A/D or Arrow Keys: Move Left/Right | W/S or ↑↓: Move Forward/Back</p>
-        <p>SPACE: Shoot | Destroy all enemies!</p>
-    </div>
-
-    <!-- Mobile Controls -->
-    <div id="mobileControls">
-        <div id="joystick">
-            <div id="joystickBase"></div>
-            <div id="joystickStick"></div>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen active">
+        <div class="splash-content">
+            <h1 class="game-title">RPS FIGHTERS</h1>
+            <div class="splash-subtitle">Card Fighting Game</div>
+            <div class="loading-spinner"></div>
         </div>
-        <div id="shootButton">🔥</div>
     </div>
 
+    <!-- Main Menu -->
+    <div id="main-menu" class="screen">
+        <div class="menu-container">
+            <h1 class="game-title">RPS FIGHTERS</h1>
+            <div class="menu-buttons">
+                <button class="menu-btn" id="btn-vs-ai">VS AI</button>
+                <button class="menu-btn" id="btn-local">Local Multiplayer</button>
+                <button class="menu-btn" id="btn-practice">Practice Mode</button>
+                <button class="menu-btn" id="btn-how-to-play">How to Play</button>
+                <button class="menu-btn" id="btn-settings">Settings</button>
+                <button class="menu-btn" id="btn-stats">Stats</button>
+            </div>
+            <div class="version">v1.0.0</div>
+        </div>
+    </div>
+
+    <!-- Difficulty Selection (for VS AI) -->
+    <div id="difficulty-screen" class="screen">
+        <div class="menu-container">
+            <h2 class="screen-title">Select Difficulty</h2>
+            <div class="menu-buttons">
+                <button class="menu-btn difficulty-btn" data-difficulty="easy">
+                    <div class="btn-title">EASY</div>
+                    <div class="btn-desc">Random moves</div>
+                </button>
+                <button class="menu-btn difficulty-btn" data-difficulty="normal">
+                    <div class="btn-title">NORMAL</div>
+                    <div class="btn-desc">Basic patterns</div>
+                </button>
+                <button class="menu-btn difficulty-btn" data-difficulty="hard">
+                    <div class="btn-title">HARD</div>
+                    <div class="btn-desc">Strategic AI (3s timer)</div>
+                </button>
+            </div>
+            <button class="back-btn" id="diff-back">Back</button>
+        </div>
+    </div>
+
+    <!-- Character Selection -->
+    <div id="character-select" class="screen">
+        <div class="char-select-container">
+            <h2 class="screen-title" id="player-select-title">Player 1: Select Your Fighter</h2>
+
+            <div class="character-grid">
+                <!-- Zephyra -->
+                <div class="character-card" data-character="ZEPHYRA">
+                    <div class="char-portrait zephyra-portrait"></div>
+                    <div class="char-info">
+                        <div class="char-name">ZEPHYRA</div>
+                        <div class="char-title">The Tempest Dancer</div>
+                        <div class="char-quote">"Strike like the wind"</div>
+                    </div>
+                </div>
+
+                <!-- Kragmaw -->
+                <div class="character-card" data-character="KRAGMAW">
+                    <div class="char-portrait kragmaw-portrait"></div>
+                    <div class="char-info">
+                        <div class="char-name">KRAGMAW</div>
+                        <div class="char-title">The Mountain's Fury</div>
+                        <div class="char-quote">"Unyielding as stone"</div>
+                    </div>
+                </div>
+
+                <!-- Vexilor -->
+                <div class="character-card" data-character="VEXILOR">
+                    <div class="char-portrait vexilor-portrait"></div>
+                    <div class="char-info">
+                        <div class="char-name">VEXILOR</div>
+                        <div class="char-title">The Void Whisperer</div>
+                        <div class="char-quote">"Darkness bends"</div>
+                    </div>
+                </div>
+
+                <!-- Pyrraxis -->
+                <div class="character-card" data-character="PYRRAXIS">
+                    <div class="char-portrait pyrraxis-portrait"></div>
+                    <div class="char-info">
+                        <div class="char-name">PYRRAXIS</div>
+                        <div class="char-title">The Flameheart</div>
+                        <div class="char-quote">"Burn bright"</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="back-btn" id="char-back">Back</button>
+        </div>
+    </div>
+
+    <!-- Battle Screen -->
+    <div id="battle-screen" class="screen">
+        <!-- Opponent Info (Top) -->
+        <div class="player-info opponent-info">
+            <div class="player-portrait" id="p2-portrait"></div>
+            <div class="player-details">
+                <div class="player-name" id="p2-name">OPPONENT</div>
+                <div class="health-bar-container">
+                    <div class="health-bar" id="p2-health-bar">
+                        <div class="health-fill" id="p2-health-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="health-text" id="p2-health-text">10/10</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battle Area (Center) -->
+        <div class="battle-area">
+            <div class="round-info">
+                <div class="round-text" id="round-text">ROUND 1</div>
+                <div class="timer-container">
+                    <svg class="timer-ring" width="80" height="80">
+                        <circle class="timer-circle" cx="40" cy="40" r="36"></circle>
+                    </svg>
+                    <div class="timer-text" id="timer-text">5</div>
+                </div>
+            </div>
+
+            <div class="move-display">
+                <div class="move-card p1-move" id="p1-move-display"></div>
+                <div class="vs-text">VS</div>
+                <div class="move-card p2-move" id="p2-move-display"></div>
+            </div>
+
+            <div class="result-display" id="result-display"></div>
+        </div>
+
+        <!-- Player Info (Bottom) -->
+        <div class="player-info player1-info">
+            <div class="player-portrait" id="p1-portrait"></div>
+            <div class="player-details">
+                <div class="player-name" id="p1-name">YOU</div>
+                <div class="health-bar-container">
+                    <div class="health-bar" id="p1-health-bar">
+                        <div class="health-fill" id="p1-health-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="health-text" id="p1-health-text">10/10</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Move Selection Buttons -->
+        <div class="move-buttons" id="move-buttons">
+            <button class="move-btn" id="btn-rock" data-move="rock">
+                <div class="move-icon">✊</div>
+                <div class="move-name">ROCK</div>
+                <div class="move-damage">5 DMG</div>
+            </button>
+            <button class="move-btn" id="btn-paper" data-move="paper">
+                <div class="move-icon">✋</div>
+                <div class="move-name">PAPER</div>
+                <div class="move-damage">3 DMG</div>
+            </button>
+            <button class="move-btn" id="btn-scissors" data-move="scissors">
+                <div class="move-icon">✌️</div>
+                <div class="move-name">SCISSORS</div>
+                <div class="move-damage">1 DMG</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="screen">
+        <div class="victory-container">
+            <h2 class="victory-title" id="victory-title">PLAYER 1 WINS!</h2>
+            <div class="victory-reason" id="victory-reason">K.O.</div>
+
+            <div class="final-stats">
+                <div class="stat-row">
+                    <span>Final Health:</span>
+                    <span id="final-health">10 - 0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Rounds Played:</span>
+                    <span id="rounds-played">3</span>
+                </div>
+            </div>
+
+            <div class="victory-buttons">
+                <button class="menu-btn" id="btn-rematch">Rematch</button>
+                <button class="menu-btn" id="btn-char-select">Character Select</button>
+                <button class="menu-btn" id="btn-main-menu">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- How to Play Screen -->
+    <div id="how-to-play" class="screen">
+        <div class="menu-container">
+            <h2 class="screen-title">How to Play</h2>
+            <div class="tutorial-content">
+                <div class="tutorial-section">
+                    <h3>Basic Rules</h3>
+                    <p>Rock beats Scissors, Scissors beats Paper, Paper beats Rock</p>
+                </div>
+
+                <div class="tutorial-section">
+                    <h3>The Twist: Damage System</h3>
+                    <p><strong>Rock moves:</strong> 5 damage</p>
+                    <p><strong>Paper moves:</strong> 3 damage</p>
+                    <p><strong>Scissors moves:</strong> 1 damage</p>
+                    <p class="highlight">The LOSER takes damage equal to BOTH cards combined!</p>
+                    <p class="example">Example: Rock (5) beats Scissors (1) = 6 damage to loser</p>
+                </div>
+
+                <div class="tutorial-section">
+                    <h3>Win Conditions</h3>
+                    <p>• Reduce opponent's health to 0 (K.O.)</p>
+                    <p>• Have more health after 3 rounds</p>
+                    <p>• Sudden death if tied after 3 rounds</p>
+                </div>
+
+                <div class="tutorial-section">
+                    <h3>Timer</h3>
+                    <p>Normal: 5 seconds per move</p>
+                    <p>Hard: 3 seconds per move</p>
+                    <p>Practice: No timer</p>
+                </div>
+            </div>
+            <button class="back-btn" id="help-back">Back</button>
+        </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen">
+        <div class="menu-container">
+            <h2 class="screen-title">Settings</h2>
+            <div class="settings-list">
+                <div class="setting-item">
+                    <span>Sound Effects</span>
+                    <button class="toggle-btn" id="toggle-sfx">ON</button>
+                </div>
+                <div class="setting-item">
+                    <span>Music</span>
+                    <button class="toggle-btn" id="toggle-music">ON</button>
+                </div>
+                <div class="setting-item">
+                    <span>Vibration</span>
+                    <button class="toggle-btn" id="toggle-vibration">ON</button>
+                </div>
+                <div class="setting-item">
+                    <button class="menu-btn" id="btn-reset-stats">Reset Stats</button>
+                </div>
+            </div>
+            <button class="back-btn" id="settings-back">Back</button>
+        </div>
+    </div>
+
+    <!-- Stats Screen -->
+    <div id="stats-screen" class="screen">
+        <div class="menu-container">
+            <h2 class="screen-title">Statistics</h2>
+            <div class="stats-content">
+                <div class="stat-row">
+                    <span>Games Played:</span>
+                    <span id="stat-games">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Wins:</span>
+                    <span id="stat-wins">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Losses:</span>
+                    <span id="stat-losses">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Win Rate:</span>
+                    <span id="stat-winrate">0%</span>
+                </div>
+                <div class="stat-row">
+                    <span>Highest Damage:</span>
+                    <span id="stat-highest-damage">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Favorite Character:</span>
+                    <span id="stat-fav-char">None</span>
+                </div>
+            </div>
+            <button class="back-btn" id="stats-back">Back</button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/characters.js"></script>
+    <script src="js/game-logic.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- Service Worker Registration -->
     <script>
-        const canvas = document.getElementById('renderCanvas');
-        const engine = new BABYLON.Engine(canvas, true);
-
-        // Game state
-        let gameRunning = true;
-        let score = 0;
-        let lives = 3;
-        let enemiesDestroyed = 0;
-        let enemySpawnRate = 2000;
-        let lastEnemySpawn = 0;
-
-        // Game objects
-        let player;
-        let scene;
-        let camera;
-        const bullets = [];
-        const enemies = [];
-        const particles = [];
-
-        // Input state
-        const keys = {
-            left: false,
-            right: false,
-            forward: false,
-            backward: false,
-            space: false
-        };
-
-        // Create scene
-        function createScene() {
-            scene = new BABYLON.Scene(engine);
-            scene.clearColor = new BABYLON.Color3(0, 0, 0.05);
-
-            // Camera
-            camera = new BABYLON.ArcRotateCamera(
-                'camera',
-                0,
-                Math.PI / 3,
-                50,
-                new BABYLON.Vector3(0, 0, 0),
-                scene
-            );
-            camera.lowerRadiusLimit = 40;
-            camera.upperRadiusLimit = 60;
-            camera.lowerBetaLimit = Math.PI / 4;
-            camera.upperBetaLimit = Math.PI / 2.5;
-
-            // Lighting
-            const light1 = new BABYLON.HemisphericLight(
-                'light1',
-                new BABYLON.Vector3(0, 1, 0),
-                scene
-            );
-            light1.intensity = 0.5;
-
-            const light2 = new BABYLON.PointLight(
-                'light2',
-                new BABYLON.Vector3(0, 10, 0),
-                scene
-            );
-            light2.intensity = 0.8;
-            light2.diffuse = new BABYLON.Color3(0, 0.8, 1);
-
-            // Create starfield
-            createStarfield();
-
-            // Create player
-            createPlayer();
-
-            // Create ground grid for reference
-            createGrid();
-
-            return scene;
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed', err));
+            });
         }
-
-        // Create starfield background
-        function createStarfield() {
-            const starfield = BABYLON.MeshBuilder.CreateSphere(
-                'starfield',
-                { diameter: 500 },
-                scene
-            );
-
-            const starMaterial = new BABYLON.StandardMaterial('starMat', scene);
-            starMaterial.emissiveColor = new BABYLON.Color3(1, 1, 1);
-            starMaterial.backFaceCulling = false;
-
-            const starTexture = new BABYLON.Texture(
-                'data:image/svg+xml;base64,' + btoa(`
-                    <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="512" height="512" fill="black"/>
-                        ${Array.from({length: 200}, () => {
-                            const x = Math.random() * 512;
-                            const y = Math.random() * 512;
-                            const size = Math.random() * 2;
-                            const brightness = 0.5 + Math.random() * 0.5;
-                            return `<circle cx="${x}" cy="${y}" r="${size}" fill="rgba(255,255,255,${brightness})"/>`;
-                        }).join('')}
-                    </svg>
-                `),
-                scene
-            );
-
-            starMaterial.emissiveTexture = starTexture;
-            starfield.material = starMaterial;
-        }
-
-        // Create grid
-        function createGrid() {
-            const gridMaterial = new BABYLON.StandardMaterial('gridMat', scene);
-            gridMaterial.emissiveColor = new BABYLON.Color3(0, 0.3, 0.5);
-            gridMaterial.wireframe = true;
-            gridMaterial.alpha = 0.3;
-
-            const ground = BABYLON.MeshBuilder.CreateGround(
-                'ground',
-                { width: 100, height: 100 },
-                scene
-            );
-            ground.position.y = -5;
-            ground.material = gridMaterial;
-        }
-
-        // Create player ship
-        function createPlayer() {
-            // Main body
-            const body = BABYLON.MeshBuilder.CreateBox(
-                'playerBody',
-                { width: 2, height: 0.5, depth: 3 },
-                scene
-            );
-
-            // Wings
-            const leftWing = BABYLON.MeshBuilder.CreateBox(
-                'leftWing',
-                { width: 2, height: 0.2, depth: 1.5 },
-                scene
-            );
-            leftWing.position.x = -2;
-            leftWing.position.z = -0.5;
-
-            const rightWing = BABYLON.MeshBuilder.CreateBox(
-                'rightWing',
-                { width: 2, height: 0.2, depth: 1.5 },
-                scene
-            );
-            rightWing.position.x = 2;
-            rightWing.position.z = -0.5;
-
-            // Cockpit
-            const cockpit = BABYLON.MeshBuilder.CreateSphere(
-                'cockpit',
-                { diameter: 1 },
-                scene
-            );
-            cockpit.position.y = 0.5;
-            cockpit.position.z = 0.5;
-            cockpit.scaling = new BABYLON.Vector3(0.8, 0.6, 1.2);
-
-            // Merge into one mesh
-            player = BABYLON.Mesh.MergeMeshes(
-                [body, leftWing, rightWing, cockpit],
-                true,
-                true
-            );
-
-            // Material
-            const playerMaterial = new BABYLON.StandardMaterial('playerMat', scene);
-            playerMaterial.diffuseColor = new BABYLON.Color3(0, 0.8, 1);
-            playerMaterial.emissiveColor = new BABYLON.Color3(0, 0.4, 0.6);
-            playerMaterial.specularColor = new BABYLON.Color3(1, 1, 1);
-            player.material = playerMaterial;
-
-            player.position = new BABYLON.Vector3(0, 0, 0);
-            player.rotation.y = Math.PI;
-
-            // Add glow layer
-            const gl = new BABYLON.GlowLayer('glow', scene);
-            gl.intensity = 0.5;
-        }
-
-        // Create enemy
-        function createEnemy() {
-            const type = Math.floor(Math.random() * 3);
-            let enemy;
-
-            if (type === 0) {
-                // Pyramid enemy
-                enemy = BABYLON.MeshBuilder.CreateCylinder(
-                    'enemy',
-                    { diameterTop: 0, diameterBottom: 2, height: 2 },
-                    scene
-                );
-            } else if (type === 1) {
-                // Box enemy
-                enemy = BABYLON.MeshBuilder.CreateBox(
-                    'enemy',
-                    { size: 2 },
-                    scene
-                );
-            } else {
-                // Sphere enemy
-                enemy = BABYLON.MeshBuilder.CreateSphere(
-                    'enemy',
-                    { diameter: 2 },
-                    scene
-                );
-            }
-
-            const enemyMaterial = new BABYLON.StandardMaterial('enemyMat', scene);
-            const colorChoice = Math.random();
-            if (colorChoice < 0.33) {
-                enemyMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
-                enemyMaterial.emissiveColor = new BABYLON.Color3(0.5, 0, 0);
-            } else if (colorChoice < 0.66) {
-                enemyMaterial.diffuseColor = new BABYLON.Color3(1, 0.4, 0);
-                enemyMaterial.emissiveColor = new BABYLON.Color3(0.5, 0.2, 0);
-            } else {
-                enemyMaterial.diffuseColor = new BABYLON.Color3(1, 0, 1);
-                enemyMaterial.emissiveColor = new BABYLON.Color3(0.5, 0, 0.5);
-            }
-            enemy.material = enemyMaterial;
-
-            enemy.position.x = (Math.random() - 0.5) * 40;
-            enemy.position.y = Math.random() * 5;
-            enemy.position.z = -50;
-
-            enemy.velocity = {
-                x: (Math.random() - 0.5) * 0.1,
-                z: 0.15 + Math.random() * 0.15
-            };
-
-            enemy.rotationSpeed = {
-                x: (Math.random() - 0.5) * 0.05,
-                y: (Math.random() - 0.5) * 0.05
-            };
-
-            enemies.push(enemy);
-        }
-
-        // Create bullet
-        function shoot() {
-            if (!gameRunning) return;
-
-            const bullet = BABYLON.MeshBuilder.CreateCylinder(
-                'bullet',
-                { diameter: 0.3, height: 2 },
-                scene
-            );
-
-            const bulletMaterial = new BABYLON.StandardMaterial('bulletMat', scene);
-            bulletMaterial.diffuseColor = new BABYLON.Color3(1, 1, 0);
-            bulletMaterial.emissiveColor = new BABYLON.Color3(1, 1, 0);
-            bullet.material = bulletMaterial;
-
-            bullet.position = player.position.clone();
-            bullet.position.y += 1;
-            bullet.position.z -= 2;
-            bullet.rotation.x = Math.PI / 2;
-
-            bullet.velocity = -0.8;
-
-            bullets.push(bullet);
-        }
-
-        // Create explosion effect
-        function createExplosion(position) {
-            const particleSystem = new BABYLON.ParticleSystem('explosion', 200, scene);
-
-            particleSystem.particleTexture = new BABYLON.Texture(
-                'data:image/svg+xml;base64,' + btoa(`
-                    <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="32" cy="32" r="30" fill="white"/>
-                    </svg>
-                `),
-                scene
-            );
-
-            particleSystem.emitter = position;
-            particleSystem.minEmitBox = new BABYLON.Vector3(-0.5, -0.5, -0.5);
-            particleSystem.maxEmitBox = new BABYLON.Vector3(0.5, 0.5, 0.5);
-
-            particleSystem.color1 = new BABYLON.Color4(1, 1, 0, 1);
-            particleSystem.color2 = new BABYLON.Color4(1, 0.5, 0, 1);
-            particleSystem.colorDead = new BABYLON.Color4(1, 0, 0, 0);
-
-            particleSystem.minSize = 0.3;
-            particleSystem.maxSize = 1;
-
-            particleSystem.minLifeTime = 0.3;
-            particleSystem.maxLifeTime = 0.8;
-
-            particleSystem.emitRate = 500;
-            particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
-
-            particleSystem.gravity = new BABYLON.Vector3(0, 0, 0);
-            particleSystem.direction1 = new BABYLON.Vector3(-2, -2, -2);
-            particleSystem.direction2 = new BABYLON.Vector3(2, 2, 2);
-
-            particleSystem.minEmitPower = 1;
-            particleSystem.maxEmitPower = 3;
-            particleSystem.updateSpeed = 0.01;
-
-            particleSystem.start();
-
-            setTimeout(() => {
-                particleSystem.stop();
-                setTimeout(() => particleSystem.dispose(), 1000);
-            }, 100);
-        }
-
-        // Update game
-        function updateGame() {
-            if (!gameRunning) return;
-
-            const deltaTime = engine.getDeltaTime() / 1000;
-            const currentTime = Date.now();
-
-            // Update player position
-            const moveSpeed = 20 * deltaTime;
-            if (keys.left && player.position.x > -20) {
-                player.position.x -= moveSpeed;
-            }
-            if (keys.right && player.position.x < 20) {
-                player.position.x += moveSpeed;
-            }
-            if (keys.forward && player.position.z > -20) {
-                player.position.z -= moveSpeed;
-            }
-            if (keys.backward && player.position.z < 20) {
-                player.position.z += moveSpeed;
-            }
-
-            // Update camera to follow player
-            camera.target = player.position;
-
-            // Update bullets
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                bullets[i].position.z += bullets[i].velocity;
-
-                if (bullets[i].position.z < -60) {
-                    bullets[i].dispose();
-                    bullets.splice(i, 1);
-                }
-            }
-
-            // Update enemies
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                enemies[i].position.z += enemies[i].velocity.z;
-                enemies[i].position.x += enemies[i].velocity.x;
-                enemies[i].rotation.x += enemies[i].rotationSpeed.x;
-                enemies[i].rotation.y += enemies[i].rotationSpeed.y;
-
-                // Check collision with player
-                if (player.intersectsMesh(enemies[i], false)) {
-                    createExplosion(enemies[i].position);
-                    enemies[i].dispose();
-                    enemies.splice(i, 1);
-                    lives--;
-                    updateUI();
-                    if (lives <= 0) {
-                        endGame();
-                    }
-                    continue;
-                }
-
-                // Remove if off screen
-                if (enemies[i].position.z > 30) {
-                    enemies[i].dispose();
-                    enemies.splice(i, 1);
-                }
-            }
-
-            // Check bullet-enemy collisions
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    if (bullets[i] && enemies[j] && bullets[i].intersectsMesh(enemies[j], false)) {
-                        createExplosion(enemies[j].position);
-                        bullets[i].dispose();
-                        bullets.splice(i, 1);
-                        enemies[j].dispose();
-                        enemies.splice(j, 1);
-                        score += 100;
-                        enemiesDestroyed++;
-                        updateUI();
-                        break;
-                    }
-                }
-            }
-
-            // Spawn enemies
-            if (currentTime - lastEnemySpawn > enemySpawnRate) {
-                createEnemy();
-                lastEnemySpawn = currentTime;
-
-                // Gradually increase difficulty
-                if (enemySpawnRate > 500) {
-                    enemySpawnRate -= 5;
-                }
-            }
-        }
-
-        // Update UI
-        function updateUI() {
-            document.getElementById('score').textContent = score;
-            document.getElementById('lives').textContent = lives;
-            document.getElementById('enemies').textContent = enemiesDestroyed;
-        }
-
-        // End game
-        function endGame() {
-            gameRunning = false;
-            document.getElementById('finalScore').textContent = score;
-            document.getElementById('finalEnemies').textContent = enemiesDestroyed;
-            document.getElementById('gameOver').style.display = 'block';
-        }
-
-        // Restart game
-        function restartGame() {
-            // Clean up
-            bullets.forEach(b => b.dispose());
-            enemies.forEach(e => e.dispose());
-            bullets.length = 0;
-            enemies.length = 0;
-
-            // Reset state
-            gameRunning = true;
-            score = 0;
-            lives = 3;
-            enemiesDestroyed = 0;
-            enemySpawnRate = 2000;
-            lastEnemySpawn = 0;
-
-            player.position = new BABYLON.Vector3(0, 0, 0);
-
-            document.getElementById('gameOver').style.display = 'none';
-            updateUI();
-        }
-
-        // Keyboard controls
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                keys.left = true;
-            }
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                keys.right = true;
-            }
-            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-                keys.forward = true;
-            }
-            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-                keys.backward = true;
-            }
-            if (e.key === ' ') {
-                e.preventDefault();
-                if (!keys.space) {
-                    shoot();
-                }
-                keys.space = true;
-            }
-        });
-
-        window.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                keys.left = false;
-            }
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                keys.right = false;
-            }
-            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-                keys.forward = false;
-            }
-            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-                keys.backward = false;
-            }
-            if (e.key === ' ') {
-                keys.space = false;
-            }
-        });
-
-        // Mobile touch controls
-        const joystick = document.getElementById('joystick');
-        const joystickStick = document.getElementById('joystickStick');
-        const shootButton = document.getElementById('shootButton');
-
-        let joystickActive = false;
-        let joystickId = null;
-        let shootInterval = null;
-
-        // Joystick touch handlers
-        joystick.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            joystickActive = true;
-            joystickId = e.touches[0].identifier;
-            handleJoystickMove(e.touches[0]);
-        });
-
-        joystick.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (!joystickActive) return;
-
-            for (let touch of e.touches) {
-                if (touch.identifier === joystickId) {
-                    handleJoystickMove(touch);
-                    break;
-                }
-            }
-        });
-
-        joystick.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            joystickActive = false;
-            joystickId = null;
-            keys.left = false;
-            keys.right = false;
-            keys.forward = false;
-            keys.backward = false;
-            joystickStick.style.transform = 'translate(-50%, -50%)';
-        });
-
-        function handleJoystickMove(touch) {
-            const rect = joystick.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-
-            const deltaX = touch.clientX - centerX;
-            const deltaY = touch.clientY - centerY;
-
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            const maxDistance = rect.width / 2 - 30;
-
-            const clampedDistance = Math.min(distance, maxDistance);
-            const angle = Math.atan2(deltaY, deltaX);
-
-            const stickX = Math.cos(angle) * clampedDistance;
-            const stickY = Math.sin(angle) * clampedDistance;
-
-            joystickStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
-
-            // Update movement keys based on joystick position
-            const threshold = maxDistance * 0.3;
-
-            keys.left = deltaX < -threshold;
-            keys.right = deltaX > threshold;
-            keys.forward = deltaY < -threshold;
-            keys.backward = deltaY > threshold;
-        }
-
-        // Shoot button handlers
-        shootButton.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            shoot();
-            shootInterval = setInterval(() => {
-                shoot();
-            }, 200);
-        });
-
-        shootButton.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            if (shootInterval) {
-                clearInterval(shootInterval);
-                shootInterval = null;
-            }
-        });
-
-        shootButton.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            if (shootInterval) {
-                clearInterval(shootInterval);
-                shootInterval = null;
-            }
-        });
-
-        // Initialize
-        scene = createScene();
-        updateUI();
-
-        // Render loop
-        engine.runRenderLoop(() => {
-            updateGame();
-            scene.render();
-        });
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            engine.resize();
-        });
     </script>
 </body>
 </html>

@@ -1,0 +1,61 @@
+{
+  "name": "RPS Fighters - Card Fighting Game",
+  "short_name": "RPS Fighters",
+  "description": "A rock-paper-scissors card fighting game with unique damage mechanics. Choose your fighter and battle against AI or friends!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#00CED1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/images/ui/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/ui/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "screenshots": [
+    {
+      "src": "assets/images/ui/screenshot-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "VS AI",
+      "short_name": "VS AI",
+      "description": "Battle against AI opponent",
+      "url": "/?mode=ai",
+      "icons": [
+        {
+          "src": "assets/images/ui/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Local Multiplayer",
+      "short_name": "Local",
+      "description": "Play with a friend",
+      "url": "/?mode=local",
+      "icons": [
+        {
+          "src": "assets/images/ui/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

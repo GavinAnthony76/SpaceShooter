@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate RPS Fighters Icons</title>
+</head>
+<body>
+    <h1>Icon Generator</h1>
+    <p>Right-click the images below and save them to assets/images/ui/</p>
+    <canvas id="icon192" width="192" height="192"></canvas>
+    <canvas id="icon512" width="512" height="512"></canvas>
+
+    <script>
+        function generateIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#00CED1');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw RPS symbols
+            ctx.font = `bold ${size/4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Rock
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText('✊', size/4, size/2.5);
+
+            // Paper
+            ctx.fillStyle = '#00ff00';
+            ctx.fillText('✋', size/2, size/2.5);
+
+            // Scissors
+            ctx.fillStyle = '#ff6666';
+            ctx.fillText('✌️', size*3/4, size/2.5);
+
+            // Title
+            ctx.font = `bold ${size/8}px Arial`;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText('RPS', size/2, size*3/4);
+            ctx.font = `bold ${size/10}px Arial`;
+            ctx.fillText('FIGHTERS', size/2, size*7/8);
+
+            // Convert to image
+            const img = new Image();
+            img.src = canvas.toDataURL();
+            document.body.appendChild(img);
+        }
+
+        generateIcon('icon192', 192);
+        generateIcon('icon512', 512);
+    </script>
+</body>
+</html>
