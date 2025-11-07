@@ -123,6 +123,117 @@
             pointer-events: none;
             z-index: 10;
         }
+
+        /* Mobile Controls */
+        #mobileControls {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 250px;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        #joystick {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 150px;
+            height: 150px;
+            pointer-events: all;
+        }
+
+        #joystickBase {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.2);
+            border: 3px solid rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            position: absolute;
+        }
+
+        #joystickStick {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.6);
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 30px #00ffff;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s;
+        }
+
+        #shootButton {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 0, 0.3);
+            border: 4px solid rgba(255, 255, 0, 0.7);
+            box-shadow: 0 0 30px rgba(255, 255, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #ffff00;
+            font-weight: bold;
+            pointer-events: all;
+            user-select: none;
+            transition: all 0.1s;
+        }
+
+        #shootButton:active {
+            background: rgba(255, 255, 0, 0.6);
+            transform: scale(0.95);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #title {
+                font-size: 24px;
+                top: 10px;
+            }
+
+            #ui {
+                font-size: 16px;
+                top: 50px;
+                left: 10px;
+            }
+
+            #instructions {
+                display: none;
+            }
+
+            #mobileControls {
+                display: block;
+            }
+
+            #gameOver h1 {
+                font-size: 36px;
+            }
+
+            #gameOver p {
+                font-size: 18px;
+            }
+
+            #gameOver {
+                padding: 30px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            #instructions {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
@@ -146,6 +257,15 @@
     <div id="instructions">
         <p>⬅️ ➡️ A/D or Arrow Keys: Move Left/Right | W/S or ↑↓: Move Forward/Back</p>
         <p>SPACE: Shoot | Destroy all enemies!</p>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobileControls">
+        <div id="joystick">
+            <div id="joystickBase"></div>
+            <div id="joystickStick"></div>
+        </div>
+        <div id="shootButton">🔥</div>
     </div>
 
     <script>
@@ -626,6 +746,99 @@
             }
             if (e.key === ' ') {
                 keys.space = false;
+            }
+        });
+
+        // Mobile touch controls
+        const joystick = document.getElementById('joystick');
+        const joystickStick = document.getElementById('joystickStick');
+        const shootButton = document.getElementById('shootButton');
+
+        let joystickActive = false;
+        let joystickId = null;
+        let shootInterval = null;
+
+        // Joystick touch handlers
+        joystick.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            joystickActive = true;
+            joystickId = e.touches[0].identifier;
+            handleJoystickMove(e.touches[0]);
+        });
+
+        joystick.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!joystickActive) return;
+
+            for (let touch of e.touches) {
+                if (touch.identifier === joystickId) {
+                    handleJoystickMove(touch);
+                    break;
+                }
+            }
+        });
+
+        joystick.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            joystickActive = false;
+            joystickId = null;
+            keys.left = false;
+            keys.right = false;
+            keys.forward = false;
+            keys.backward = false;
+            joystickStick.style.transform = 'translate(-50%, -50%)';
+        });
+
+        function handleJoystickMove(touch) {
+            const rect = joystick.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const deltaX = touch.clientX - centerX;
+            const deltaY = touch.clientY - centerY;
+
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = rect.width / 2 - 30;
+
+            const clampedDistance = Math.min(distance, maxDistance);
+            const angle = Math.atan2(deltaY, deltaX);
+
+            const stickX = Math.cos(angle) * clampedDistance;
+            const stickY = Math.sin(angle) * clampedDistance;
+
+            joystickStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
+
+            // Update movement keys based on joystick position
+            const threshold = maxDistance * 0.3;
+
+            keys.left = deltaX < -threshold;
+            keys.right = deltaX > threshold;
+            keys.forward = deltaY < -threshold;
+            keys.backward = deltaY > threshold;
+        }
+
+        // Shoot button handlers
+        shootButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            shoot();
+            shootInterval = setInterval(() => {
+                shoot();
+            }, 200);
+        });
+
+        shootButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (shootInterval) {
+                clearInterval(shootInterval);
+                shootInterval = null;
+            }
+        });
+
+        shootButton.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            if (shootInterval) {
+                clearInterval(shootInterval);
+                shootInterval = null;
             }
         });
 
